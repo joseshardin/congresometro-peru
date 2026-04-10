@@ -1,0 +1,8 @@
+.env
+venv/
+__pycache__/
+*.pyc
+congresometro.db
+congresistas.json
+proyectos.json
+congresistas_con_codigo.json

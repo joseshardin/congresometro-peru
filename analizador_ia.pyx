@@ -1,0 +1,219 @@
+from openai import OpenAI
+import sqlite_utils
+import json
+import time
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# ─── CONFIGURACIÓN ───
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENROUTER_API_KEY"),
+)
+
+MODEL = "meta-llama/llama-3.1-8b-instruct:free"
+db = sqlite_utils.Database("congresometro.db")
+
+# ─── CREAR TABLA SI NO EXISTE ───
+if "analisis_ia" not in db.table_names():
+    db["analisis_ia"].create({
+        "proyecto_codigo": str,
+        "congresista_nombre": str,
+        "titulo": str,
+        "estado": str,
+        "categoria": str,
+        "beneficiario": str,
+        "impacto_pueblo": int,
+        "etiquetas": str,
+        "resumen_ia": str,
+        "bandera_roja": int,
+        "analizado_en": str,
+    }, pk="proyecto_codigo")
+    print("✅ Tabla analisis_ia creada")
+
+# ─── PROYECTOS PENDIENTES ───
+ya_analizados = set(row["proyecto_codigo"] for row in db["analisis_ia"].rows)
+
+proyectos = db.execute("""
+    SELECT codigo_proyecto, congresista_nombre, titulo, estado
+    FROM proyectos
+    WHERE estado IN ('APROBADO', 'Publicada en el Diario Oficial El Peruano')
+    AND codigo_proyecto IS NOT NULL
+    ORDER BY estado DESC, fecha DESC
+""").fetchall()
+
+pendientes = [p for p in proyectos if p[0] not in ya_analizados]
+
+print(f"📊 Total a analizar: {len(proyectos)}")
+print(f"✅ Ya analizados:    {len(ya_analizados)}")
+print(f"⏳ Pendientes:       {len(pendientes)}")
+print()
+
+if not pendientes:
+    print("🎉 ¡Todo ya está analizado!")
+    exit()
+
+# ─── PROMPT ───
+PROMPT_TEMPLATE = """Eres un analista político experto en el Congreso del Perú.
+Analiza este proyecto de ley peruano SOLO basándote en su título.
+
+Proyecto: "{titulo}"
+Congresista: {congresista}
+Estado: {estado}
+
+Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin backticks, sin explicaciones:
+{{
+  "categoria": "beneficioso|neutral|sospechoso|bandera_roja|interesante",
+  "beneficiario": "descripción breve de quién se beneficia (máx 60 chars)",
+  "impacto_pueblo": <número del 1 al 10, donde 10 es máximo beneficio para el pueblo peruano>,
+  "etiquetas": ["etiqueta1", "etiqueta2", "etiqueta3"],
+  "resumen_ia": "una sola oración explicando qué hace esta ley (máx 120 chars)",
+  "bandera_roja": <true o false>
+}}
+
+Criterios:
+- beneficioso: salud, educación, derechos ciudadanos, infraestructura pública
+- neutral: modificaciones administrativas, plazos, tecnicismos sin impacto claro
+- sospechoso: favorece sectores privados específicos, posible conflicto de interés
+- bandera_roja: exoneraciones fiscales, beneficia empresas/grupos de poder, contradice interés público
+- interesante: reformas innovadoras, transparencia, anticorrupción"""
+
+# ─── FUNCIÓN DE ANÁLISIS ───
+def analizar_proyecto(codigo, congresista, titulo, estado, intento=1):
+    prompt = PROMPT_TEMPLATE.format(
+        titulo=titulo,
+        congresista=congresista,
+        estado=estado
+    )
+    try:
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
+            max_tokens=300,
+        )
+        texto = response.choices[0].message.content.strip()
+
+        # Limpiar backticks si vienen
+        if "```" in texto:
+            partes = texto.split("```")
+            for parte in partes:
+                if "{" in parte:
+                    texto = parte.strip()
+                    if texto.startswith("json"):
+                        texto = texto[4:].strip()
+                    break
+
+        # Extraer solo el JSON si hay texto extra
+        inicio = texto.find("{")
+        fin = texto.rfind("}") + 1
+        if inicio != -1 and fin > inicio:
+            texto = texto[inicio:fin]
+
+        data = json.loads(texto)
+
+        return {
+            "proyecto_codigo": codigo,
+            "congresista_nombre": congresista,
+            "titulo": titulo,
+            "estado": estado,
+            "categoria": data.get("categoria", "neutral"),
+            "beneficiario": data.get("beneficiario", ""),
+            "impacto_pueblo": int(data.get("impacto_pueblo", 5)),
+            "etiquetas": json.dumps(data.get("etiquetas", []), ensure_ascii=False),
+            "resumen_ia": data.get("resumen_ia", ""),
+            "bandera_roja": 1 if data.get("bandera_roja") else 0,
+            "analizado_en": time.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
+    except json.JSONDecodeError as e:
+        print(f"  ⚠️  JSON inválido en {codigo}: {e}")
+        return None
+    except Exception as e:
+        msg = str(e)
+        if "429" in msg or "rate" in msg.lower():
+            espera = 30 * intento
+            print(f"  ⏳ Rate limit — esperando {espera}s...")
+            time.sleep(espera)
+            if intento < 3:
+                return analizar_proyecto(codigo, congresista, titulo, estado, intento + 1)
+        print(f"  ⚠️  Error en {codigo}: {msg[:120]}")
+        return None
+
+# ─── LOOP PRINCIPAL ───
+PAUSA_ENTRE_REQUESTS = 3
+PAUSA_CADA = 50
+PAUSA_LARGA = 15
+
+errores = 0
+guardados = 0
+
+print(f"🚀 Iniciando análisis con {MODEL}...\n")
+
+for i, (codigo, congresista, titulo, estado) in enumerate(pendientes):
+    print(f"[{i+1}/{len(pendientes)}] {codigo}")
+    print(f"  📄 {titulo[:70]}...")
+
+    resultado = analizar_proyecto(codigo, congresista, titulo, estado)
+
+    if resultado:
+        db["analisis_ia"].upsert(resultado, pk="proyecto_codigo")
+        guardados += 1
+        cat = resultado["categoria"]
+        impacto = resultado["impacto_pueblo"]
+        bandera = " 🚩 BANDERA ROJA" if resultado["bandera_roja"] else ""
+        resumen = resultado["resumen_ia"][:80] if resultado["resumen_ia"] else ""
+        print(f"  → [{cat.upper()}] impacto: {impacto}/10{bandera}")
+        print(f"  💬 {resumen}")
+    else:
+        errores += 1
+
+    time.sleep(PAUSA_ENTRE_REQUESTS)
+
+    if (i + 1) % PAUSA_CADA == 0:
+        total_bd = db.execute("SELECT COUNT(*) FROM analisis_ia").fetchone()[0]
+        print(f"\n  ⏸️  Checkpoint: {guardados} guardados, {errores} errores, {total_bd} en BD total\n")
+        time.sleep(PAUSA_LARGA)
+
+# ─── RESUMEN FINAL ───
+print(f"\n{'='*50}")
+print(f"✅ ANÁLISIS COMPLETO")
+print(f"   Guardados: {guardados}")
+print(f"   Errores:   {errores}")
+print(f"   Total en BD: {db['analisis_ia'].count}")
+
+print("\n📊 RESUMEN POR CATEGORÍA:")
+categorias = db.execute("""
+    SELECT categoria, COUNT(*) as total, ROUND(AVG(impacto_pueblo),1) as promedio
+    FROM analisis_ia
+    GROUP BY categoria
+    ORDER BY total DESC
+""").fetchall()
+
+emojis = {
+    "beneficioso": "🟢",
+    "neutral": "🟡",
+    "sospechoso": "🟠",
+    "bandera_roja": "🔴",
+    "interesante": "🔵"
+}
+
+for cat, total, promedio in categorias:
+    emoji = emojis.get(cat, "⚪")
+    print(f"  {emoji} {cat}: {total} proyectos (impacto promedio: {promedio}/10)")
+
+print(f"\n🚩 TOP BANDERAS ROJAS:")
+banderas = db.execute("""
+    SELECT congresista_nombre, titulo, resumen_ia, impacto_pueblo
+    FROM analisis_ia
+    WHERE bandera_roja = 1
+    ORDER BY impacto_pueblo ASC
+    LIMIT 15
+""").fetchall()
+
+for congresista, titulo, resumen, impacto in banderas:
+    nombre_corto = congresista.split(",")[0]
+    print(f"  🚩 {nombre_corto} (impacto: {impacto}/10)")
+    print(f"     {resumen or titulo[:80]}")

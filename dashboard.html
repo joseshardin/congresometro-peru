@@ -1,0 +1,1561 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CongresoMeter Perú</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --rojo: #c0392b;
+        --rojo-oscuro: #96281b;
+        --rojo-claro: #e74c3c;
+        --blanco: #ffffff;
+        --gris-fondo: #f0f2f5;
+        --gris-borde: #e0e0e0;
+        --gris-texto: #666;
+        --negro: #1a1a1a;
+        --verde: #27ae60;
+        --verde-oscuro: #1e8449;
+        --amarillo: #f39c12;
+        --azul: #2980b9;
+        --dorado: #d4ac0d;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "DM Sans", sans-serif;
+        background: var(--gris-fondo);
+        color: var(--negro);
+        min-height: 100vh;
+      }
+
+      header {
+        background: linear-gradient(
+          135deg,
+          #96281b 0%,
+          #c0392b 60%,
+          #e74c3c 100%
+        );
+        color: white;
+        padding: 0 40px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 4px 20px rgba(192, 57, 43, 0.4);
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .header-left h1 {
+        font-family: "Playfair Display", serif;
+        font-size: 22px;
+        letter-spacing: -0.5px;
+      }
+      .header-left p {
+        font-size: 12px;
+        opacity: 0.75;
+      }
+      .header-badge {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+
+      .nav-tabs {
+        display: flex;
+        gap: 4px;
+        background: white;
+        padding: 0 40px;
+        border-bottom: 2px solid var(--gris-borde);
+        position: sticky;
+        top: 70px;
+        z-index: 99;
+      }
+
+      .tab {
+        padding: 14px 20px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--gris-texto);
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .tab:hover {
+        color: var(--rojo);
+      }
+      .tab.activo {
+        color: var(--rojo);
+        border-bottom-color: var(--rojo);
+        font-weight: 600;
+      }
+
+      .vista {
+        display: none;
+        padding: 32px 40px;
+        max-width: 1300px;
+        margin: 0 auto;
+      }
+      .vista.activa {
+        display: block;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border-top: 4px solid var(--rojo);
+        transition: transform 0.2s;
+      }
+      .card:hover {
+        transform: translateY(-2px);
+      }
+      .card .numero {
+        font-family: "Playfair Display", serif;
+        font-size: 40px;
+        font-weight: 900;
+        color: var(--rojo);
+        line-height: 1;
+      }
+      .card .etiqueta {
+        font-size: 13px;
+        color: var(--gris-texto);
+        margin-top: 6px;
+      }
+
+      .seccion {
+        background: white;
+        border-radius: 12px;
+        padding: 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+
+      .seccion-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid var(--gris-fondo);
+      }
+      .seccion h2 {
+        font-family: "Playfair Display", serif;
+        font-size: 20px;
+        color: var(--negro);
+      }
+
+      .filtros {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .filtros input,
+      .filtros select {
+        padding: 9px 14px;
+        border: 1.5px solid var(--gris-borde);
+        border-radius: 8px;
+        font-size: 13px;
+        font-family: "DM Sans", sans-serif;
+        outline: none;
+        background: white;
+        transition: border-color 0.2s;
+      }
+      .filtros input {
+        flex: 1;
+        min-width: 200px;
+      }
+      .filtros input:focus,
+      .filtros select:focus {
+        border-color: var(--rojo);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th {
+        text-align: left;
+        padding: 10px 14px;
+        background: var(--gris-fondo);
+        font-weight: 600;
+        color: #555;
+        font-size: 12px;
+        letter-spacing: 0.3px;
+        border-bottom: 2px solid var(--gris-borde);
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+      }
+      th:hover {
+        background: #e8eaed;
+      }
+      td {
+        padding: 11px 14px;
+        border-bottom: 1px solid #f5f5f5;
+        vertical-align: middle;
+      }
+      tr:hover td {
+        background: #fafafa;
+      }
+
+      .foto {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--gris-borde);
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 3px 9px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 600;
+        background: #f0f0f0;
+        color: #444;
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        letter-spacing: 0.2px;
+      }
+
+      .barra-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .barra {
+        height: 5px;
+        background: #eee;
+        border-radius: 3px;
+        flex: 1;
+        max-width: 70px;
+      }
+      .barra-fill {
+        height: 100%;
+        background: var(--rojo);
+        border-radius: 3px;
+      }
+
+      .btn-ver {
+        background: var(--rojo);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-size: 11px;
+        font-family: "DM Sans", sans-serif;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      .btn-ver:hover {
+        background: var(--rojo-oscuro);
+      }
+
+      .paginacion {
+        display: flex;
+        gap: 6px;
+        margin-top: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .paginacion button {
+        padding: 6px 12px;
+        border: 1.5px solid var(--gris-borde);
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-family: "DM Sans", sans-serif;
+        transition: all 0.15s;
+      }
+      .paginacion button.activo {
+        background: var(--rojo);
+        color: white;
+        border-color: var(--rojo);
+      }
+      .paginacion button:hover:not(.activo) {
+        background: var(--gris-fondo);
+      }
+
+      .grafico-container {
+        overflow-x: auto;
+      }
+      .barra-grafico {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 500px;
+      }
+      .barra-row {
+        display: grid;
+        grid-template-columns: 200px 1fr 80px;
+        align-items: center;
+        gap: 12px;
+      }
+      .barra-label {
+        font-size: 12px;
+        font-weight: 500;
+        text-align: right;
+        color: var(--negro);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .barra-track {
+        height: 28px;
+        background: var(--gris-fondo);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+      }
+      .barra-fill-grafico {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--rojo-oscuro),
+          var(--rojo-claro)
+        );
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        padding-left: 10px;
+        transition: width 0.8s ease;
+        min-width: 4px;
+      }
+      .barra-num {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--gris-texto);
+        text-align: right;
+      }
+
+      .estados-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+      }
+      .estado-card {
+        border: 1.5px solid var(--gris-borde);
+        border-radius: 10px;
+        padding: 16px;
+        transition: border-color 0.2s;
+      }
+      .estado-card:hover {
+        border-color: var(--rojo);
+      }
+      .estado-nombre {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--gris-texto);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+      }
+      .estado-numero {
+        font-family: "Playfair Display", serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--negro);
+      }
+      .estado-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+      }
+
+      #vista-detalle {
+        display: none;
+      }
+      #vista-detalle.activa {
+        display: block;
+      }
+
+      .detalle-header {
+        background: white;
+        border-radius: 12px;
+        padding: 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 24px;
+        align-items: start;
+      }
+      .detalle-foto {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid var(--rojo);
+      }
+      .detalle-nombre {
+        font-family: "Playfair Display", serif;
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .detalle-info {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      .detalle-info span {
+        font-size: 13px;
+        color: var(--gris-texto);
+      }
+      .detalle-info strong {
+        color: var(--negro);
+      }
+
+      .detalle-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .stat-mini {
+        background: white;
+        border-radius: 10px;
+        padding: 18px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      .stat-mini .num {
+        font-family: "Playfair Display", serif;
+        font-size: 30px;
+        font-weight: 700;
+        color: var(--rojo);
+      }
+      .stat-mini .lab {
+        font-size: 11px;
+        color: var(--gris-texto);
+        margin-top: 4px;
+      }
+
+      .btn-volver {
+        background: transparent;
+        border: 1.5px solid var(--rojo);
+        color: var(--rojo);
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-family: "DM Sans", sans-serif;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+        margin-bottom: 20px;
+      }
+      .btn-volver:hover {
+        background: var(--rojo);
+        color: white;
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+      }
+      .pill-aprobado {
+        background: #d5f5e3;
+        color: #1e8449;
+      }
+      .pill-publicado {
+        background: #d6eaf8;
+        color: #1a5276;
+      }
+      .pill-comision {
+        background: #fef9e7;
+        color: #7d6608;
+      }
+      .pill-archivo {
+        background: #f9ebea;
+        color: #922b21;
+      }
+      .pill-default {
+        background: #f0f0f0;
+        color: #555;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 60px;
+        color: var(--gris-texto);
+        font-size: 14px;
+      }
+      .loading::after {
+        content: "";
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--gris-borde);
+        border-top-color: var(--rojo);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .filtro-proyectos {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      .chip {
+        padding: 5px 12px;
+        border-radius: 20px;
+        border: 1.5px solid var(--gris-borde);
+        font-size: 12px;
+        cursor: pointer;
+        background: white;
+        font-family: "DM Sans", sans-serif;
+        transition: all 0.15s;
+      }
+      .chip.activo {
+        background: var(--rojo);
+        color: white;
+        border-color: var(--rojo);
+      }
+      .chip:hover:not(.activo) {
+        border-color: var(--rojo);
+        color: var(--rojo);
+      }
+
+      /* ═══ RANKINGS ═══ */
+      .rankings-intro {
+        background: white;
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        border-left: 5px solid var(--rojo);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      .rankings-intro p {
+        font-size: 14px;
+        color: var(--gris-texto);
+        margin-top: 6px;
+        line-height: 1.6;
+      }
+
+      .rankings-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+
+      @media (max-width: 900px) {
+        .rankings-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .ranking-panel {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+      }
+
+      .ranking-panel-header {
+        padding: 18px 24px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .ranking-panel-header.vergüenza {
+        background: linear-gradient(135deg, #7b241c, #c0392b);
+        color: white;
+      }
+
+      .ranking-panel-header.honor {
+        background: linear-gradient(135deg, #1a5c2a, #27ae60);
+        color: white;
+      }
+
+      .ranking-panel-header h3 {
+        font-family: "Playfair Display", serif;
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .ranking-panel-header p {
+        font-size: 11px;
+        opacity: 0.8;
+        margin-top: 2px;
+      }
+
+      .ranking-panel-icon {
+        font-size: 26px;
+        line-height: 1;
+      }
+
+      .ranking-lista {
+        padding: 0;
+      }
+
+      .ranking-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px;
+        border-bottom: 1px solid #f5f5f5;
+        transition: background 0.15s;
+        cursor: pointer;
+      }
+      .ranking-item:last-child {
+        border-bottom: none;
+      }
+      .ranking-item:hover {
+        background: #fafafa;
+      }
+
+      .ranking-pos {
+        font-family: "Playfair Display", serif;
+        font-size: 18px;
+        font-weight: 900;
+        min-width: 28px;
+        text-align: center;
+      }
+
+      .ranking-pos.vergüenza {
+        color: #c0392b;
+      }
+      .ranking-pos.honor {
+        color: var(--verde-oscuro);
+      }
+
+      .ranking-foto {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--gris-borde);
+        flex-shrink: 0;
+      }
+
+      .ranking-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .ranking-nombre {
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .ranking-sub {
+        font-size: 11px;
+        color: var(--gris-texto);
+        margin-top: 2px;
+      }
+
+      .ranking-stat {
+        text-align: right;
+        flex-shrink: 0;
+      }
+      .ranking-stat .num {
+        font-family: "Playfair Display", serif;
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .ranking-stat .num.vergüenza {
+        color: #c0392b;
+      }
+      .ranking-stat .num.honor {
+        color: var(--verde-oscuro);
+      }
+      .ranking-stat .lab {
+        font-size: 10px;
+        color: var(--gris-texto);
+      }
+
+      /* Sección "Cero Aprobados" */
+      .cero-aprobados-section {
+        background: white;
+        border-radius: 12px;
+        padding: 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+
+      .cero-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #fdecea;
+      }
+
+      .cero-badge {
+        background: #c0392b;
+        color: white;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 24px;
+        font-family: "Playfair Display", serif;
+        font-weight: 900;
+      }
+
+      .cero-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .cero-card {
+        border: 1.5px solid #fad7d4;
+        border-radius: 10px;
+        padding: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: #fff9f9;
+      }
+      .cero-card:hover {
+        border-color: #c0392b;
+        background: white;
+      }
+
+      .cero-foto {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #fad7d4;
+        flex-shrink: 0;
+      }
+
+      .cero-nombre {
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.3;
+      }
+      .cero-partido {
+        font-size: 10px;
+        color: var(--gris-texto);
+        margin-top: 2px;
+      }
+      .cero-proyectos {
+        margin-left: auto;
+        font-family: "Playfair Display", serif;
+        font-size: 16px;
+        font-weight: 700;
+        color: #c0392b;
+        flex-shrink: 0;
+      }
+
+      .alerta-banner {
+        background: #fdecea;
+        border: 1.5px solid #f5b7b1;
+        border-radius: 10px;
+        padding: 14px 20px;
+        font-size: 13px;
+        color: #7b241c;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .honor-banner {
+        background: #eafaf1;
+        border: 1.5px solid #a9dfbf;
+        border-radius: 10px;
+        padding: 14px 20px;
+        font-size: 13px;
+        color: #1a5c2a;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-left">
+        <span style="font-size: 28px">🇵🇪</span>
+        <div>
+          <h1>CongresoMeter Perú</h1>
+          <p>Seguimiento de la actividad legislativa 2021 – 2026</p>
+        </div>
+      </div>
+      <div class="header-badge">PERIODO 2021–2026</div>
+    </header>
+
+    <div class="nav-tabs">
+      <div class="tab activo" onclick="mostrarVista('inicio')">📊 Resumen</div>
+      <div class="tab" onclick="mostrarVista('congresistas')">
+        👤 Congresistas
+      </div>
+      <div class="tab" onclick="mostrarVista('partidos')">🏛️ Partidos</div>
+      <div class="tab" onclick="mostrarVista('estados')">📋 Estados</div>
+      <div class="tab" onclick="mostrarVista('rankings')">⚖️ Rankings</div>
+    </div>
+
+    <!-- ═══════════════ INICIO ═══════════════ -->
+    <div class="vista activa" id="vista-inicio">
+      <div class="cards" id="cards"><div class="loading">Cargando</div></div>
+      <div class="seccion">
+        <div class="seccion-header"><h2>🔝 Top 10 más activos</h2></div>
+        <div class="grafico-container">
+          <div class="barra-grafico" id="grafico-top10">
+            <div class="loading">Cargando</div>
+          </div>
+        </div>
+      </div>
+      <div class="seccion">
+        <div class="seccion-header"><h2>✅ Top 10 con más aprobados</h2></div>
+        <div class="grafico-container">
+          <div class="barra-grafico" id="grafico-aprobados">
+            <div class="loading">Cargando</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ CONGRESISTAS ═══════════════ -->
+    <div class="vista" id="vista-congresistas">
+      <div class="seccion">
+        <div class="seccion-header">
+          <h2>👤 Congresistas</h2>
+          <span
+            id="contador-congresistas"
+            style="font-size: 13px; color: var(--gris-texto)"
+          ></span>
+        </div>
+        <div class="filtros">
+          <input
+            type="text"
+            id="buscar"
+            placeholder="🔍 Buscar por nombre..."
+          />
+          <select id="filtro-partido">
+            <option value="">Todos los partidos</option>
+          </select>
+          <select id="filtro-region">
+            <option value="">Todas las regiones</option>
+          </select>
+        </div>
+        <div id="tabla-container"><div class="loading">Cargando</div></div>
+        <div class="paginacion" id="paginacion"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ PARTIDOS ═══════════════ -->
+    <div class="vista" id="vista-partidos">
+      <div class="seccion">
+        <div class="seccion-header"><h2>🏛️ Proyectos por Partido</h2></div>
+        <div class="grafico-container">
+          <div class="barra-grafico" id="grafico-partidos">
+            <div class="loading">Cargando</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ ESTADOS ═══════════════ -->
+    <div class="vista" id="vista-estados">
+      <div class="seccion">
+        <div class="seccion-header"><h2>📋 Proyectos por Estado</h2></div>
+        <div class="estados-grid" id="estados-grid">
+          <div class="loading">Cargando</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ RANKINGS ═══════════════ -->
+    <div class="vista" id="vista-rankings">
+      <div class="rankings-intro">
+        <h2
+          style="
+            font-family: &quot;Playfair Display&quot;, serif;
+            font-size: 22px;
+          "
+        >
+          ⚖️ Escrutinio Público — Rankings de Honor y Vergüenza
+        </h2>
+        <p>
+          Datos reales del Congreso 2021–2026. Haz clic en cualquier congresista
+          para ver su perfil completo. Los rankings de ratio exigen un mínimo de
+          50 proyectos presentados para ser comparables.
+        </p>
+      </div>
+
+      <div id="rankings-contenido">
+        <div class="loading">Cargando rankings</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ DETALLE ═══════════════ -->
+    <div class="vista" id="vista-detalle">
+      <button class="btn-volver" onclick="volverDesdDetalle()">← Volver</button>
+      <div id="detalle-contenido"><div class="loading">Cargando</div></div>
+    </div>
+
+    <script>
+      const API = "http://localhost:5000";
+      let todosCongresistas = [];
+      let visibles = [];
+      let paginaActual = 1;
+      const POR_PAGINA = 20;
+      let maxProyectos = 1;
+      let orden = { col: "total_proyectos", asc: false };
+      let vistaAnterior = "congresistas";
+
+      // ─── NAVEGACIÓN ───
+      function mostrarVista(nombre) {
+        document
+          .querySelectorAll(".vista")
+          .forEach((v) => v.classList.remove("activa"));
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) => t.classList.remove("activo"));
+        document.getElementById("vista-" + nombre).classList.add("activa");
+        const tabs = document.querySelectorAll(".tab");
+        const idx = {
+          inicio: 0,
+          congresistas: 1,
+          partidos: 2,
+          estados: 3,
+          rankings: 4,
+        };
+        if (idx[nombre] !== undefined)
+          tabs[idx[nombre]].classList.add("activo");
+      }
+
+      // ─── CARGA INICIAL ───
+      async function iniciar() {
+        const [
+          resumen,
+          congresistas,
+          partidos,
+          estados,
+          rankings,
+          sinActividad,
+        ] = await Promise.all([
+          fetch(`${API}/api/resumen`).then((r) => r.json()),
+          fetch(`${API}/api/congresistas`).then((r) => r.json()),
+          fetch(`${API}/api/partidos`).then((r) => r.json()),
+          fetch(`${API}/api/estados`).then((r) => r.json()),
+          fetch(`${API}/api/rankings`).then((r) => r.json()),
+          fetch(`${API}/api/sin-actividad`).then((r) => r.json()),
+        ]);
+
+        renderCards(resumen);
+        renderTop10(congresistas);
+        renderTop10Aprobados(congresistas);
+
+        todosCongresistas = congresistas;
+        maxProyectos = Math.max(...congresistas.map((c) => c.total_proyectos));
+        poblarFiltros(congresistas);
+        aplicarFiltros();
+
+        renderGraficoPartidos(partidos);
+        renderEstados(estados);
+        renderRankings(rankings, sinActividad);
+      }
+
+      // ─── CARDS ───
+      function renderCards(data) {
+        document.getElementById("cards").innerHTML = `
+          <div class="card"><div class="numero">${data.total_congresistas}</div><div class="etiqueta">Congresistas activos</div></div>
+          <div class="card"><div class="numero">${data.total_proyectos.toLocaleString()}</div><div class="etiqueta">Proyectos de ley totales</div></div>
+          <div class="card"><div class="numero">${data.aprobados}</div><div class="etiqueta">Aprobados en el pleno</div></div>
+          <div class="card"><div class="numero">${data.publicados.toLocaleString()}</div><div class="etiqueta">Publicados en El Peruano</div></div>
+        `;
+      }
+
+      // ─── TOP 10 ───
+      function renderTop10(congresistas) {
+        const top = congresistas.slice(0, 10);
+        const max = top[0].total_proyectos;
+        document.getElementById("grafico-top10").innerHTML = top
+          .map(
+            (c) => `
+          <div class="barra-row">
+            <div class="barra-label" title="${c.nombre}">${c.nombre.split(",")[0]}</div>
+            <div class="barra-track">
+              <div class="barra-fill-grafico" style="width:${Math.round((c.total_proyectos / max) * 100)}%"></div>
+            </div>
+            <div class="barra-num">${c.total_proyectos.toLocaleString()}</div>
+          </div>`,
+          )
+          .join("");
+      }
+
+      function renderTop10Aprobados(congresistas) {
+        const top = [...congresistas]
+          .sort((a, b) => b.aprobados - a.aprobados)
+          .slice(0, 10);
+        const max = top[0]?.aprobados || 1;
+        document.getElementById("grafico-aprobados").innerHTML = top
+          .map(
+            (c) => `
+          <div class="barra-row">
+            <div class="barra-label" title="${c.nombre}">${c.nombre.split(",")[0]}</div>
+            <div class="barra-track">
+              <div class="barra-fill-grafico" style="width:${Math.round((c.aprobados / max) * 100)}%;background:linear-gradient(90deg,#1a5276,#2980b9)"></div>
+            </div>
+            <div class="barra-num">${c.aprobados}</div>
+          </div>`,
+          )
+          .join("");
+      }
+
+      // ─── FILTROS ───
+      function poblarFiltros(congresistas) {
+        const partidos = [
+          ...new Set(congresistas.map((c) => c.partido)),
+        ].sort();
+        const regiones = [...new Set(congresistas.map((c) => c.region))].sort();
+        const selP = document.getElementById("filtro-partido");
+        partidos.forEach((p) => {
+          const o = document.createElement("option");
+          o.value = p;
+          o.textContent = p;
+          selP.appendChild(o);
+        });
+        const selR = document.getElementById("filtro-region");
+        regiones.forEach((r) => {
+          const o = document.createElement("option");
+          o.value = r;
+          o.textContent = r;
+          selR.appendChild(o);
+        });
+      }
+
+      function aplicarFiltros() {
+        const buscar = document.getElementById("buscar").value.toLowerCase();
+        const partido = document.getElementById("filtro-partido").value;
+        const region = document.getElementById("filtro-region").value;
+        visibles = todosCongresistas.filter(
+          (c) =>
+            c.nombre.toLowerCase().includes(buscar) &&
+            (!partido || c.partido === partido) &&
+            (!region || c.region === region),
+        );
+        visibles.sort((a, b) => {
+          let va = a[orden.col],
+            vb = b[orden.col];
+          if (typeof va === "number") return orden.asc ? va - vb : vb - va;
+          return orden.asc
+            ? String(va).localeCompare(String(vb))
+            : String(vb).localeCompare(String(va));
+        });
+        paginaActual = 1;
+        document.getElementById("contador-congresistas").textContent =
+          `${visibles.length} de ${todosCongresistas.length} congresistas`;
+        renderTabla();
+        renderPaginacion();
+      }
+
+      // ─── TABLA ───
+      function renderTabla() {
+        const inicio = (paginaActual - 1) * POR_PAGINA;
+        const pagina = visibles.slice(inicio, inicio + POR_PAGINA);
+        if (!pagina.length) {
+          document.getElementById("tabla-container").innerHTML =
+            '<div class="loading">Sin resultados</div>';
+          return;
+        }
+        const fl = (col) =>
+          col === orden.col ? (orden.asc ? " ↑" : " ↓") : "";
+        document.getElementById("tabla-container").innerHTML = `
+          <table>
+            <thead><tr>
+              <th style="width:40px"></th>
+              <th onclick="ordenar('nombre')">Nombre${fl("nombre")}</th>
+              <th onclick="ordenar('region')">Región${fl("region")}</th>
+              <th onclick="ordenar('partido')">Partido${fl("partido")}</th>
+              <th onclick="ordenar('total_proyectos')">Proyectos${fl("total_proyectos")}</th>
+              <th onclick="ordenar('aprobados')">Aprobados${fl("aprobados")}</th>
+              <th onclick="ordenar('votos')">Votos${fl("votos")}</th>
+              <th></th>
+            </tr></thead>
+            <tbody>${pagina
+              .map(
+                (c) => `
+              <tr>
+                <td><img class="foto" src="${c.foto_url || ""}" onerror="this.src='';this.style.display='none'" alt=""></td>
+                <td><strong>${c.nombre}</strong></td>
+                <td style="font-size:12px">${c.region}</td>
+                <td><span class="badge" title="${c.partido}">${c.partido}</span></td>
+                <td>
+                  <div class="barra-container">
+                    <span style="font-weight:600">${c.total_proyectos.toLocaleString()}</span>
+                    <div class="barra"><div class="barra-fill" style="width:${Math.round((c.total_proyectos / maxProyectos) * 100)}%"></div></div>
+                  </div>
+                </td>
+                <td style="font-weight:600;color:var(--verde)">${c.aprobados}</td>
+                <td style="font-size:12px">${Number(c.votos || 0).toLocaleString()}</td>
+                <td><button class="btn-ver" onclick="verDetalle('${c.nombre.replace(/'/g, "\\'")}')">Ver →</button></td>
+              </tr>`,
+              )
+              .join("")}
+            </tbody>
+          </table>`;
+      }
+
+      function renderPaginacion() {
+        const total = Math.ceil(visibles.length / POR_PAGINA);
+        let html = "";
+        for (let i = 1; i <= total; i++)
+          html += `<button class="${i === paginaActual ? "activo" : ""}" onclick="irPagina(${i})">${i}</button>`;
+        document.getElementById("paginacion").innerHTML = html;
+      }
+
+      function irPagina(n) {
+        paginaActual = n;
+        renderTabla();
+        renderPaginacion();
+        document
+          .getElementById("vista-congresistas")
+          .scrollIntoView({ behavior: "smooth" });
+      }
+
+      function ordenar(col) {
+        if (orden.col === col) orden.asc = !orden.asc;
+        else {
+          orden.col = col;
+          orden.asc = false;
+        }
+        aplicarFiltros();
+      }
+
+      // ─── PARTIDOS ───
+      function renderGraficoPartidos(partidos) {
+        const max = partidos[0]?.total_proyectos || 1;
+        document.getElementById("grafico-partidos").innerHTML = partidos
+          .map(
+            (p) => `
+          <div class="barra-row">
+            <div class="barra-label" title="${p.partido}">${p.partido}</div>
+            <div class="barra-track">
+              <div class="barra-fill-grafico" style="width:${Math.round((p.total_proyectos / max) * 100)}%"></div>
+            </div>
+            <div class="barra-num">${p.total_proyectos.toLocaleString()}</div>
+          </div>`,
+          )
+          .join("");
+      }
+
+      // ─── ESTADOS ───
+      const coloresEstado = {
+        "EN COMISIÓN": "#f39c12",
+        "Publicada en el Diario Oficial El Peruano": "#2980b9",
+        DICTAMEN: "#8e44ad",
+        "Orden del Día": "#16a085",
+        APROBADO: "#27ae60",
+        "Al Archivo": "#e74c3c",
+        "Retirado por su Autor": "#95a5a6",
+      };
+
+      function renderEstados(estados) {
+        document.getElementById("estados-grid").innerHTML = estados
+          .map(
+            (e) => `
+          <div class="estado-card">
+            <div class="estado-nombre">
+              <span class="estado-dot" style="background:${coloresEstado[e.estado] || "#aaa"}"></span>${e.estado}
+            </div>
+            <div class="estado-numero">${e.total.toLocaleString()}</div>
+          </div>`,
+          )
+          .join("");
+      }
+
+      // ════════════════════════════════════════
+      // ─── RANKINGS ───
+      // ════════════════════════════════════════
+      function renderRankings(data, sinActividad) {
+        const totalCero = data.cero_aprobados?.length || 0;
+
+        const panelVergüenza = (
+          titulo,
+          descripcion,
+          lista,
+          metrica,
+          labelMetrica,
+          tipo,
+        ) => `
+          <div class="ranking-panel">
+            <div class="ranking-panel-header vergüenza">
+              <div class="ranking-panel-icon">🔴</div>
+              <div>
+                <h3>${titulo}</h3>
+                <p>${descripcion}</p>
+              </div>
+            </div>
+            <div class="ranking-lista">
+              ${lista
+                .map(
+                  (c, i) => `
+                <div class="ranking-item" onclick="verDetalle('${c.nombre.replace(/'/g, "\\'")}')">
+                  <div class="ranking-pos vergüenza">#${i + 1}</div>
+                  <img class="ranking-foto" src="${c.foto_url || ""}" onerror="this.src='';this.style.display='none'" alt="">
+                  <div class="ranking-info">
+                    <div class="ranking-nombre">${c.nombre}</div>
+                    <div class="ranking-sub">${c.partido} · ${c.region}</div>
+                  </div>
+                  <div class="ranking-stat">
+                    <div class="num vergüenza">${typeof metrica(c) === "number" && !Number.isInteger(metrica(c)) ? metrica(c).toFixed(1) : metrica(c).toLocaleString()}</div>
+                    <div class="lab">${labelMetrica}</div>
+                  </div>
+                </div>`,
+                )
+                .join("")}
+            </div>
+          </div>`;
+
+        const panelHonor = (
+          titulo,
+          descripcion,
+          lista,
+          metrica,
+          labelMetrica,
+        ) => `
+          <div class="ranking-panel">
+            <div class="ranking-panel-header honor">
+              <div class="ranking-panel-icon">🟢</div>
+              <div>
+                <h3>${titulo}</h3>
+                <p>${descripcion}</p>
+              </div>
+            </div>
+            <div class="ranking-lista">
+              ${lista
+                .map(
+                  (c, i) => `
+                <div class="ranking-item" onclick="verDetalle('${c.nombre.replace(/'/g, "\\'")}')">
+                  <div class="ranking-pos honor">#${i + 1}</div>
+                  <img class="ranking-foto" src="${c.foto_url || ""}" onerror="this.src='';this.style.display='none'" alt="">
+                  <div class="ranking-info">
+                    <div class="ranking-nombre">${c.nombre}</div>
+                    <div class="ranking-sub">${c.partido} · ${c.region}</div>
+                  </div>
+                  <div class="ranking-stat">
+                    <div class="num honor">${typeof metrica(c) === "number" && !Number.isInteger(metrica(c)) ? metrica(c).toFixed(1) : metrica(c).toLocaleString()}</div>
+                    <div class="lab">${labelMetrica}</div>
+                  </div>
+                </div>`,
+                )
+                .join("")}
+            </div>
+          </div>`;
+
+        // Sección cero aprobados
+        const ceroGrid = `
+          <div class="cero-aprobados-section">
+            <div class="cero-header">
+              <div class="cero-badge">${totalCero}</div>
+              <div>
+                <h2 style="font-family:'Playfair Display',serif;font-size:18px">Congresistas con CERO proyectos aprobados</h2>
+                <p style="font-size:13px;color:var(--gris-texto);margin-top:4px">Han presentado proyectos pero ninguno ha sido aprobado en el pleno durante todo el periodo.</p>
+              </div>
+            </div>
+            <div class="alerta-banner">
+              ⚠️ Estos congresistas reciben su sueldo íntegro (S/. 15,600 mensuales) sin haber logrado que ninguno de sus proyectos sea aprobado.
+            </div>
+            <div class="cero-grid">
+              ${(data.cero_aprobados || [])
+                .map(
+                  (c) => `
+                <div class="cero-card" onclick="verDetalle('${c.nombre.replace(/'/g, "\\'")}')">
+                  <img class="cero-foto" src="${c.foto_url || ""}" onerror="this.src='';this.style.display='none'" alt="">
+                  <div style="min-width:0">
+                    <div class="cero-nombre">${c.nombre}</div>
+                    <div class="cero-partido">${c.partido}</div>
+                  </div>
+                  <div class="cero-proyectos">${c.total_proyectos}</div>
+                </div>`,
+                )
+                .join("")}
+            </div>
+          </div>`;
+
+        document.getElementById("rankings-contenido").innerHTML = `
+          <div class="rankings-grid">
+            ${panelVergüenza(
+              "Menos Activos",
+              "Presentaron la menor cantidad de proyectos",
+              data.menos_activos || [],
+              (c) => c.total_proyectos,
+              "proyectos",
+            )}
+            ${panelHonor(
+              "Más Activos",
+              "Presentaron la mayor cantidad de proyectos",
+              data.mas_activos || [],
+              (c) => c.total_proyectos,
+              "proyectos",
+            )}
+          </div>
+
+          <div class="rankings-grid">
+            ${panelVergüenza(
+              "Mayor % de Proyectos Archivados",
+              "Sus proyectos terminan mayormente en el archivo",
+              data.mas_archivados || [],
+              (c) => c.pct_inutil,
+              "% archivados",
+            )}
+            ${panelHonor(
+              "Más Aprobados",
+              "Lograron aprobar más proyectos en el pleno",
+              data.mas_aprobados || [],
+              (c) => c.aprobados,
+              "aprobados",
+            )}
+          </div>
+
+          <div class="rankings-grid">
+            ${panelVergüenza(
+              "Peor Ratio de Efectividad",
+              "Menor % de aprobación (mín. 50 proyectos)",
+              data.peor_ratio || [],
+              (c) => c.pct_aprobado,
+              "% aprobado",
+            )}
+            ${panelHonor(
+              "Mejor Ratio de Efectividad",
+              "Mayor % de aprobación (mín. 50 proyectos)",
+              data.mejor_ratio || [],
+              (c) => c.pct_aprobado,
+              "% aprobado",
+            )}
+          </div>
+
+          ${ceroGrid}
+
+          <div class="cero-aprobados-section" style="border-top: 3px solid #e0e0e0;">
+            <div class="cero-header">
+              <div class="cero-badge" style="background:#7f8c8d;font-size:20px;padding:10px 18px">${sinActividad.length}</div>
+              <div>
+                <h2 style="font-family:'Playfair Display',serif;font-size:18px">Sin registro de actividad legislativa</h2>
+                <p style="font-size:13px;color:var(--gris-texto);margin-top:4px">
+                  Congresistas de los que el sistema <strong>no tiene datos</strong> en la base de proyectos.
+                  Puede deberse a un fallo en el scraper o a que realmente no han presentado ningún proyecto.
+                </p>
+              </div>
+            </div>
+            <div class="alerta-banner" style="background:#f4f6f7;border-color:#bdc3c7;color:#555">
+              ⚠️ Estos 5 congresistas no pudieron ser rastreados automáticamente. Su actividad real debe verificarse manualmente en el portal del Congreso.
+            </div>
+            <div class="cero-grid">
+              ${sinActividad
+                .map(
+                  (c) => `
+                <div class="cero-card" style="border-color:#ddd;background:#fafafa" onclick="verDetalle('${c.nombre.replace(/'/g, "\\'")}')">
+                  <img class="cero-foto" src="${c.foto_url || ""}" onerror="this.src='';this.style.display='none'" alt="" style="border-color:#ddd">
+                  <div style="min-width:0">
+                    <div class="cero-nombre">${c.nombre}</div>
+                    <div class="cero-partido">${c.partido} · ${c.region}</div>
+                    <div style="font-size:10px;color:#aaa;margin-top:3px">${Number(c.votos || 0).toLocaleString()} votos</div>
+                  </div>
+                  <div style="font-size:10px;color:#aaa;flex-shrink:0;text-align:center">
+                    <div style="font-size:18px">?</div>
+                    <div>sin datos</div>
+                  </div>
+                </div>`,
+                )
+                .join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      // ─── DETALLE ───
+      let estadoFiltroDetalle = "todos";
+      let proyectosDetalle = [];
+
+      async function verDetalle(nombre) {
+        vistaAnterior =
+          document.querySelector(".tab.activo")?.textContent || "congresistas";
+        document
+          .querySelectorAll(".vista")
+          .forEach((v) => v.classList.remove("activa"));
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) => t.classList.remove("activo"));
+        document.getElementById("vista-detalle").classList.add("activa");
+        document.getElementById("detalle-contenido").innerHTML =
+          '<div class="loading">Cargando perfil</div>';
+
+        const data = await fetch(
+          `${API}/api/congresista/${encodeURIComponent(nombre)}`,
+        ).then((r) => r.json());
+        proyectosDetalle = data.proyectos || [];
+        estadoFiltroDetalle = "todos";
+        renderDetalle(data);
+      }
+
+      function pillEstado(estado) {
+        if (!estado) return '<span class="pill pill-default">-</span>';
+        if (estado === "APROBADO")
+          return `<span class="pill pill-aprobado">${estado}</span>`;
+        if (estado.includes("Peruano"))
+          return `<span class="pill pill-publicado">PUBLICADO</span>`;
+        if (estado === "EN COMISIÓN")
+          return `<span class="pill pill-comision">${estado}</span>`;
+        if (estado.includes("Archivo") || estado.includes("Retirado"))
+          return `<span class="pill pill-archivo">${estado}</span>`;
+        return `<span class="pill pill-default">${estado}</span>`;
+      }
+
+      function renderDetalle(data) {
+        const s = data.stats;
+        const filtrados =
+          estadoFiltroDetalle === "todos"
+            ? proyectosDetalle
+            : proyectosDetalle.filter((p) => {
+                if (estadoFiltroDetalle === "aprobados")
+                  return p.estado === "APROBADO";
+                if (estadoFiltroDetalle === "publicados")
+                  return p.estado?.includes("Peruano");
+                if (estadoFiltroDetalle === "comision")
+                  return p.estado === "EN COMISIÓN";
+                if (estadoFiltroDetalle === "archivados")
+                  return (
+                    p.estado?.includes("Archivo") ||
+                    p.estado?.includes("Retirado")
+                  );
+                return true;
+              });
+
+        document.getElementById("detalle-contenido").innerHTML = `
+          <div class="detalle-header">
+            <img class="detalle-foto" src="${data.foto_url || ""}" onerror="this.style.display='none'" alt="">
+            <div>
+              <div class="detalle-nombre">${data.nombre}</div>
+              <div class="detalle-info">
+                <span>🏛️ <strong>${data.partido}</strong></span>
+                <span>📍 <strong>${data.region}</strong></span>
+                <span>🗳️ <strong>${Number(data.votos || 0).toLocaleString()} votos</strong></span>
+                <span>📅 ${data.periodo_inicio} → ${data.periodo_fin}</span>
+                <span>⚡ ${data.condicion}</span>
+              </div>
+              <div class="detalle-info" style="margin-top:8px">
+                <span>✉️ ${data.email || "—"}</span>
+                ${data.web_personal ? `<a href="${data.web_personal}" target="_blank" style="color:var(--rojo);font-size:13px">Ver web oficial →</a>` : ""}
+              </div>
+            </div>
+          </div>
+
+          <div class="detalle-stats">
+            <div class="stat-mini"><div class="num">${s.total.toLocaleString()}</div><div class="lab">Proyectos totales</div></div>
+            <div class="stat-mini"><div class="num" style="color:var(--verde)">${s.aprobados}</div><div class="lab">Aprobados</div></div>
+            <div class="stat-mini"><div class="num" style="color:var(--azul)">${s.publicados}</div><div class="lab">Publicados</div></div>
+            <div class="stat-mini"><div class="num" style="color:var(--amarillo)">${s.en_comision}</div><div class="lab">En comisión</div></div>
+          </div>
+
+          <div class="seccion">
+            <div class="seccion-header"><h2>📄 Proyectos de Ley (${filtrados.length})</h2></div>
+            <div class="filtro-proyectos">
+              <span class="chip ${estadoFiltroDetalle === "todos" ? "activo" : ""}" onclick="filtrarProyectos('todos', ${JSON.stringify(data).replace(/"/g, "&quot;")})">Todos (${s.total})</span>
+              <span class="chip ${estadoFiltroDetalle === "aprobados" ? "activo" : ""}" onclick="filtrarProyectos('aprobados', ${JSON.stringify(data).replace(/"/g, "&quot;")})">✅ Aprobados (${s.aprobados})</span>
+              <span class="chip ${estadoFiltroDetalle === "publicados" ? "activo" : ""}" onclick="filtrarProyectos('publicados', ${JSON.stringify(data).replace(/"/g, "&quot;")})">📰 Publicados (${s.publicados})</span>
+              <span class="chip ${estadoFiltroDetalle === "comision" ? "activo" : ""}" onclick="filtrarProyectos('comision', ${JSON.stringify(data).replace(/"/g, "&quot;")})">⏳ En comisión (${s.en_comision})</span>
+              <span class="chip ${estadoFiltroDetalle === "archivados" ? "activo" : ""}" onclick="filtrarProyectos('archivados', ${JSON.stringify(data).replace(/"/g, "&quot;")})">🗄️ Archivados (${s.archivados})</span>
+            </div>
+            <table>
+              <thead><tr>
+                <th>Código</th><th>Título</th><th>Fecha</th><th>Legislatura</th><th>Estado</th>
+              </tr></thead>
+              <tbody>
+                ${filtrados
+                  .slice(0, 100)
+                  .map(
+                    (p) => `
+                  <tr>
+                    <td style="font-size:11px;color:var(--gris-texto);white-space:nowrap">${p.codigo || "—"}</td>
+                    <td style="font-size:12px;max-width:400px">${p.titulo || "—"}</td>
+                    <td style="font-size:11px;white-space:nowrap">${p.fecha || "—"}</td>
+                    <td style="font-size:11px;white-space:nowrap">${p.legislatura || "—"}</td>
+                    <td>${pillEstado(p.estado)}</td>
+                  </tr>`,
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+            ${filtrados.length > 100 ? `<p style="text-align:center;padding:16px;font-size:12px;color:var(--gris-texto)">Mostrando 100 de ${filtrados.length} proyectos</p>` : ""}
+          </div>`;
+      }
+
+      function filtrarProyectos(filtro, data) {
+        estadoFiltroDetalle = filtro;
+        renderDetalle(data);
+      }
+
+      function volverDesdDetalle() {
+        mostrarVista("congresistas");
+      }
+
+      document
+        .getElementById("buscar")
+        .addEventListener("input", aplicarFiltros);
+      document
+        .getElementById("filtro-partido")
+        .addEventListener("change", aplicarFiltros);
+      document
+        .getElementById("filtro-region")
+        .addEventListener("change", aplicarFiltros);
+
+      iniciar();
+    </script>
+  </body>
+</html>
